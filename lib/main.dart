@@ -3,16 +3,16 @@ import 'config/app_colors.dart';
 import 'config/app_routes.dart';
 
 void main() {
-  runApp(const AgivisionApp());
+  runApp(const AgrivisionApp());
 }
 
-class AgivisionApp extends StatelessWidget {
-  const AgivisionApp({super.key});
+class AgrivisionApp extends StatelessWidget {
+  const AgrivisionApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AGIVISION',
+      title: 'AGRIVISION',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: AppColors.greenDeep,

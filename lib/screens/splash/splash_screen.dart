@@ -74,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen> {
               FadeInDown(
                 delay: const Duration(milliseconds: 200),
                 child: const Text(
-                  'AGIVISION',
+                  'AGRIVISION',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 32,

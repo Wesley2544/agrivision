@@ -41,7 +41,7 @@ class HomeScreen extends StatelessWidget {
                               style: TextStyle(
                                   color: Colors.white.withOpacity(0.6),
                                   fontSize: 11)),
-                          const Text('John Kamau',
+                          const Text('Wisley Otieno',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,

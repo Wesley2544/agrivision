@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.white, size: 30),
                   ),
                   const SizedBox(height: 10),
-                  const Text('AGIVISION',
+                  const Text('AGRIVISION',
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
