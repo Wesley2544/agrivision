@@ -326,3 +326,19 @@ class ResultScreen extends StatelessWidget {
       ),
     );
   }
+  Widget _treatTag(String label, Color textColor, Color borderColor, Color bgColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: borderColor, width: 1.5),
+      ),
+      child: Text(label,
+          style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: textColor)),
+    );
+  }
+}
