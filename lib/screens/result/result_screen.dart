@@ -341,4 +341,46 @@ class ResultScreen extends StatelessWidget {
               color: textColor)),
     );
   }
+    Widget _infoCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String title,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+              color: AppColors.greenDeep.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(9)),
+            child: Icon(icon, color: iconColor, size: 16),
+          ),
+          const SizedBox(height: 6),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark)),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 8, color: AppColors.textDim)),
+        ],
+      ),
+    );
+  }
 }
