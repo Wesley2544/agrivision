@@ -245,7 +245,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // ── Bottom Nav ───────────────────────────
+          // ── Bottom Nav ────────────
           _bottomNav(context),
         ],
       ),
@@ -433,7 +433,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 }
 
-// ── Data models ───────────────────────────────────────────
+// ── Data models ──────────────
 enum _Severity { high, moderate, low }
 
 class _OutbreakPin {
@@ -451,7 +451,7 @@ class _OutbreakPin {
   });
 }
 
-// ── Map painters ──────────────────────────────────────────
+// ── Map painters ─────────────────
 class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
