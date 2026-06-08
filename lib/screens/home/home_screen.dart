@@ -166,7 +166,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // ── Bottom Nav ───────────────────────────────
+          // ── Bottom Nav 
           _bottomNav(context, 0),
         ],
       ),
