@@ -31,14 +31,11 @@ class DiagnosisDao extends DatabaseAccessor<LocalDatabase>
           ..orderBy([(t) => OrderingTerm.desc(t.timestamp)]))
         .get();
   }
-
-  /// Live stream — UI updates automatically when data changes.
   Stream<List<Diagnosis>> watchAllDiagnoses() {
     return (select(diagnoses)
           ..orderBy([(t) => OrderingTerm.desc(t.timestamp)]))
         .watch();
   }
-
   /// Attaches a GPS location to a diagnosis record.
   Future<int> insertGpsLog({
     required int diagnosisId,
@@ -56,10 +53,10 @@ class DiagnosisDao extends DatabaseAccessor<LocalDatabase>
 
   /// Adds a record to the sync queue (called whenever offline).
   Future<int> queueForSync(int diagnosisId) {
-    return into(syncQueue).insert(
-      SyncQueueCompanion.insert(
-        recordId: diagnosisId,
-        tableName: 'diagnoses',
+  return into(syncQueue).insert(
+    SyncQueueCompanion.insert(
+      recordId: diagnosisId,
+      table_name: 'diagnoses',
       ),
     );
   }

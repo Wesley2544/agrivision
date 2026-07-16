@@ -9,6 +9,7 @@ part 'local_database.g.dart';
 // TABLES
 // ══════════════════════════════════════════════════════════
 
+@DataClassName('Diagnosis')
 class Diagnoses extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get crop => text()();
@@ -24,7 +25,7 @@ class Diagnoses extends Table {
 class Treatments extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get diseaseName => text()();
-  TextColumn get type => text()(); // organic, chemical, cultural
+  TextColumn get type => text()();
   TextColumn get description => text()();
 }
 
@@ -40,7 +41,7 @@ class GpsLogs extends Table {
 class SyncQueue extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get recordId => integer()();
-  TextColumn get tableName => text()();
+  TextColumn get table_name => text()();
   TextColumn get status =>
       text().withDefault(const Constant('pending'))();
   IntColumn get retries => integer().withDefault(const Constant(0))();

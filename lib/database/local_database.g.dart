@@ -4,7 +4,7 @@ part of 'local_database.dart';
 
 // ignore_for_file: type=lint
 class $DiagnosesTable extends Diagnoses
-    with TableInfo<$DiagnosesTable, Diagnose> {
+    with TableInfo<$DiagnosesTable, Diagnosis> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -108,7 +108,7 @@ class $DiagnosesTable extends Diagnoses
   static const String $name = 'diagnoses';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Diagnose> instance, {
+    Insertable<Diagnosis> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -164,9 +164,9 @@ class $DiagnosesTable extends Diagnoses
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Diagnose map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Diagnosis map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Diagnose(
+    return Diagnosis(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -204,7 +204,7 @@ class $DiagnosesTable extends Diagnoses
   }
 }
 
-class Diagnose extends DataClass implements Insertable<Diagnose> {
+class Diagnosis extends DataClass implements Insertable<Diagnosis> {
   final int id;
   final String crop;
   final String disease;
@@ -212,7 +212,7 @@ class Diagnose extends DataClass implements Insertable<Diagnose> {
   final String? imagePath;
   final DateTime timestamp;
   final bool isSynced;
-  const Diagnose({
+  const Diagnosis({
     required this.id,
     required this.crop,
     required this.disease,
@@ -250,12 +250,12 @@ class Diagnose extends DataClass implements Insertable<Diagnose> {
     );
   }
 
-  factory Diagnose.fromJson(
+  factory Diagnosis.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Diagnose(
+    return Diagnosis(
       id: serializer.fromJson<int>(json['id']),
       crop: serializer.fromJson<String>(json['crop']),
       disease: serializer.fromJson<String>(json['disease']),
@@ -279,7 +279,7 @@ class Diagnose extends DataClass implements Insertable<Diagnose> {
     };
   }
 
-  Diagnose copyWith({
+  Diagnosis copyWith({
     int? id,
     String? crop,
     String? disease,
@@ -287,7 +287,7 @@ class Diagnose extends DataClass implements Insertable<Diagnose> {
     Value<String?> imagePath = const Value.absent(),
     DateTime? timestamp,
     bool? isSynced,
-  }) => Diagnose(
+  }) => Diagnosis(
     id: id ?? this.id,
     crop: crop ?? this.crop,
     disease: disease ?? this.disease,
@@ -296,8 +296,8 @@ class Diagnose extends DataClass implements Insertable<Diagnose> {
     timestamp: timestamp ?? this.timestamp,
     isSynced: isSynced ?? this.isSynced,
   );
-  Diagnose copyWithCompanion(DiagnosesCompanion data) {
-    return Diagnose(
+  Diagnosis copyWithCompanion(DiagnosesCompanion data) {
+    return Diagnosis(
       id: data.id.present ? data.id.value : this.id,
       crop: data.crop.present ? data.crop.value : this.crop,
       disease: data.disease.present ? data.disease.value : this.disease,
@@ -312,7 +312,7 @@ class Diagnose extends DataClass implements Insertable<Diagnose> {
 
   @override
   String toString() {
-    return (StringBuffer('Diagnose(')
+    return (StringBuffer('Diagnosis(')
           ..write('id: $id, ')
           ..write('crop: $crop, ')
           ..write('disease: $disease, ')
@@ -337,7 +337,7 @@ class Diagnose extends DataClass implements Insertable<Diagnose> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Diagnose &&
+      (other is Diagnosis &&
           other.id == this.id &&
           other.crop == this.crop &&
           other.disease == this.disease &&
@@ -347,7 +347,7 @@ class Diagnose extends DataClass implements Insertable<Diagnose> {
           other.isSynced == this.isSynced);
 }
 
-class DiagnosesCompanion extends UpdateCompanion<Diagnose> {
+class DiagnosesCompanion extends UpdateCompanion<Diagnosis> {
   final Value<int> id;
   final Value<String> crop;
   final Value<String> disease;
@@ -375,7 +375,7 @@ class DiagnosesCompanion extends UpdateCompanion<Diagnose> {
   }) : crop = Value(crop),
        disease = Value(disease),
        confidence = Value(confidence);
-  static Insertable<Diagnose> custom({
+  static Insertable<Diagnosis> custom({
     Expression<int>? id,
     Expression<String>? crop,
     Expression<String>? disease,
@@ -1153,11 +1153,11 @@ class $SyncQueueTable extends SyncQueue
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _tableNameMeta = const VerificationMeta(
-    'tableName',
+  static const VerificationMeta _table_nameMeta = const VerificationMeta(
+    'table_name',
   );
   @override
-  late final GeneratedColumn<String> tableName = GeneratedColumn<String>(
+  late final GeneratedColumn<String> table_name = GeneratedColumn<String>(
     'table_name',
     aliasedName,
     false,
@@ -1190,7 +1190,7 @@ class $SyncQueueTable extends SyncQueue
   List<GeneratedColumn> get $columns => [
     id,
     recordId,
-    tableName,
+    table_name,
     status,
     retries,
   ];
@@ -1219,11 +1219,11 @@ class $SyncQueueTable extends SyncQueue
     }
     if (data.containsKey('table_name')) {
       context.handle(
-        _tableNameMeta,
-        tableName.isAcceptableOrUnknown(data['table_name']!, _tableNameMeta),
+        _table_nameMeta,
+        table_name.isAcceptableOrUnknown(data['table_name']!, _table_nameMeta),
       );
     } else if (isInserting) {
-      context.missing(_tableNameMeta);
+      context.missing(_table_nameMeta);
     }
     if (data.containsKey('status')) {
       context.handle(
@@ -1254,7 +1254,7 @@ class $SyncQueueTable extends SyncQueue
         DriftSqlType.int,
         data['${effectivePrefix}record_id'],
       )!,
-      tableName: attachedDatabase.typeMapping.read(
+      table_name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}table_name'],
       )!,
@@ -1278,13 +1278,13 @@ class $SyncQueueTable extends SyncQueue
 class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
   final int id;
   final int recordId;
-  final String tableName;
+  final String table_name;
   final String status;
   final int retries;
   const SyncQueueData({
     required this.id,
     required this.recordId,
-    required this.tableName,
+    required this.table_name,
     required this.status,
     required this.retries,
   });
@@ -1293,7 +1293,7 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['record_id'] = Variable<int>(recordId);
-    map['table_name'] = Variable<String>(tableName);
+    map['table_name'] = Variable<String>(table_name);
     map['status'] = Variable<String>(status);
     map['retries'] = Variable<int>(retries);
     return map;
@@ -1303,7 +1303,7 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
     return SyncQueueCompanion(
       id: Value(id),
       recordId: Value(recordId),
-      tableName: Value(tableName),
+      table_name: Value(table_name),
       status: Value(status),
       retries: Value(retries),
     );
@@ -1317,7 +1317,7 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
     return SyncQueueData(
       id: serializer.fromJson<int>(json['id']),
       recordId: serializer.fromJson<int>(json['recordId']),
-      tableName: serializer.fromJson<String>(json['tableName']),
+      table_name: serializer.fromJson<String>(json['table_name']),
       status: serializer.fromJson<String>(json['status']),
       retries: serializer.fromJson<int>(json['retries']),
     );
@@ -1328,7 +1328,7 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'recordId': serializer.toJson<int>(recordId),
-      'tableName': serializer.toJson<String>(tableName),
+      'table_name': serializer.toJson<String>(table_name),
       'status': serializer.toJson<String>(status),
       'retries': serializer.toJson<int>(retries),
     };
@@ -1337,13 +1337,13 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
   SyncQueueData copyWith({
     int? id,
     int? recordId,
-    String? tableName,
+    String? table_name,
     String? status,
     int? retries,
   }) => SyncQueueData(
     id: id ?? this.id,
     recordId: recordId ?? this.recordId,
-    tableName: tableName ?? this.tableName,
+    table_name: table_name ?? this.table_name,
     status: status ?? this.status,
     retries: retries ?? this.retries,
   );
@@ -1351,7 +1351,9 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
     return SyncQueueData(
       id: data.id.present ? data.id.value : this.id,
       recordId: data.recordId.present ? data.recordId.value : this.recordId,
-      tableName: data.tableName.present ? data.tableName.value : this.tableName,
+      table_name: data.table_name.present
+          ? data.table_name.value
+          : this.table_name,
       status: data.status.present ? data.status.value : this.status,
       retries: data.retries.present ? data.retries.value : this.retries,
     );
@@ -1362,7 +1364,7 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
     return (StringBuffer('SyncQueueData(')
           ..write('id: $id, ')
           ..write('recordId: $recordId, ')
-          ..write('tableName: $tableName, ')
+          ..write('table_name: $table_name, ')
           ..write('status: $status, ')
           ..write('retries: $retries')
           ..write(')'))
@@ -1370,14 +1372,14 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
   }
 
   @override
-  int get hashCode => Object.hash(id, recordId, tableName, status, retries);
+  int get hashCode => Object.hash(id, recordId, table_name, status, retries);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SyncQueueData &&
           other.id == this.id &&
           other.recordId == this.recordId &&
-          other.tableName == this.tableName &&
+          other.table_name == this.table_name &&
           other.status == this.status &&
           other.retries == this.retries);
 }
@@ -1385,35 +1387,35 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
 class SyncQueueCompanion extends UpdateCompanion<SyncQueueData> {
   final Value<int> id;
   final Value<int> recordId;
-  final Value<String> tableName;
+  final Value<String> table_name;
   final Value<String> status;
   final Value<int> retries;
   const SyncQueueCompanion({
     this.id = const Value.absent(),
     this.recordId = const Value.absent(),
-    this.tableName = const Value.absent(),
+    this.table_name = const Value.absent(),
     this.status = const Value.absent(),
     this.retries = const Value.absent(),
   });
   SyncQueueCompanion.insert({
     this.id = const Value.absent(),
     required int recordId,
-    required String tableName,
+    required String table_name,
     this.status = const Value.absent(),
     this.retries = const Value.absent(),
   }) : recordId = Value(recordId),
-       tableName = Value(tableName);
+       table_name = Value(table_name);
   static Insertable<SyncQueueData> custom({
     Expression<int>? id,
     Expression<int>? recordId,
-    Expression<String>? tableName,
+    Expression<String>? table_name,
     Expression<String>? status,
     Expression<int>? retries,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (recordId != null) 'record_id': recordId,
-      if (tableName != null) 'table_name': tableName,
+      if (table_name != null) 'table_name': table_name,
       if (status != null) 'status': status,
       if (retries != null) 'retries': retries,
     });
@@ -1422,14 +1424,14 @@ class SyncQueueCompanion extends UpdateCompanion<SyncQueueData> {
   SyncQueueCompanion copyWith({
     Value<int>? id,
     Value<int>? recordId,
-    Value<String>? tableName,
+    Value<String>? table_name,
     Value<String>? status,
     Value<int>? retries,
   }) {
     return SyncQueueCompanion(
       id: id ?? this.id,
       recordId: recordId ?? this.recordId,
-      tableName: tableName ?? this.tableName,
+      table_name: table_name ?? this.table_name,
       status: status ?? this.status,
       retries: retries ?? this.retries,
     );
@@ -1444,8 +1446,8 @@ class SyncQueueCompanion extends UpdateCompanion<SyncQueueData> {
     if (recordId.present) {
       map['record_id'] = Variable<int>(recordId.value);
     }
-    if (tableName.present) {
-      map['table_name'] = Variable<String>(tableName.value);
+    if (table_name.present) {
+      map['table_name'] = Variable<String>(table_name.value);
     }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
@@ -1461,7 +1463,7 @@ class SyncQueueCompanion extends UpdateCompanion<SyncQueueData> {
     return (StringBuffer('SyncQueueCompanion(')
           ..write('id: $id, ')
           ..write('recordId: $recordId, ')
-          ..write('tableName: $tableName, ')
+          ..write('table_name: $table_name, ')
           ..write('status: $status, ')
           ..write('retries: $retries')
           ..write(')'))
@@ -1810,7 +1812,7 @@ typedef $$DiagnosesTableUpdateCompanionBuilder =
     });
 
 final class $$DiagnosesTableReferences
-    extends BaseReferences<_$LocalDatabase, $DiagnosesTable, Diagnose> {
+    extends BaseReferences<_$LocalDatabase, $DiagnosesTable, Diagnosis> {
   $$DiagnosesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static MultiTypedResultKey<$GpsLogsTable, List<GpsLog>> _gpsLogsRefsTable(
@@ -2011,14 +2013,14 @@ class $$DiagnosesTableTableManager
         RootTableManager<
           _$LocalDatabase,
           $DiagnosesTable,
-          Diagnose,
+          Diagnosis,
           $$DiagnosesTableFilterComposer,
           $$DiagnosesTableOrderingComposer,
           $$DiagnosesTableAnnotationComposer,
           $$DiagnosesTableCreateCompanionBuilder,
           $$DiagnosesTableUpdateCompanionBuilder,
-          (Diagnose, $$DiagnosesTableReferences),
-          Diagnose,
+          (Diagnosis, $$DiagnosesTableReferences),
+          Diagnosis,
           PrefetchHooks Function({bool gpsLogsRefs})
         > {
   $$DiagnosesTableTableManager(_$LocalDatabase db, $DiagnosesTable table)
@@ -2085,7 +2087,7 @@ class $$DiagnosesTableTableManager
                 return [
                   if (gpsLogsRefs)
                     await $_getPrefetchedData<
-                      Diagnose,
+                      Diagnosis,
                       $DiagnosesTable,
                       GpsLog
                     >(
@@ -2112,14 +2114,14 @@ typedef $$DiagnosesTableProcessedTableManager =
     ProcessedTableManager<
       _$LocalDatabase,
       $DiagnosesTable,
-      Diagnose,
+      Diagnosis,
       $$DiagnosesTableFilterComposer,
       $$DiagnosesTableOrderingComposer,
       $$DiagnosesTableAnnotationComposer,
       $$DiagnosesTableCreateCompanionBuilder,
       $$DiagnosesTableUpdateCompanionBuilder,
-      (Diagnose, $$DiagnosesTableReferences),
-      Diagnose,
+      (Diagnosis, $$DiagnosesTableReferences),
+      Diagnosis,
       PrefetchHooks Function({bool gpsLogsRefs})
     >;
 typedef $$TreatmentsTableCreateCompanionBuilder =
@@ -2613,7 +2615,7 @@ typedef $$SyncQueueTableCreateCompanionBuilder =
     SyncQueueCompanion Function({
       Value<int> id,
       required int recordId,
-      required String tableName,
+      required String table_name,
       Value<String> status,
       Value<int> retries,
     });
@@ -2621,7 +2623,7 @@ typedef $$SyncQueueTableUpdateCompanionBuilder =
     SyncQueueCompanion Function({
       Value<int> id,
       Value<int> recordId,
-      Value<String> tableName,
+      Value<String> table_name,
       Value<String> status,
       Value<int> retries,
     });
@@ -2645,8 +2647,8 @@ class $$SyncQueueTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get tableName => $composableBuilder(
-    column: $table.tableName,
+  ColumnFilters<String> get table_name => $composableBuilder(
+    column: $table.table_name,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2680,8 +2682,8 @@ class $$SyncQueueTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get tableName => $composableBuilder(
-    column: $table.tableName,
+  ColumnOrderings<String> get table_name => $composableBuilder(
+    column: $table.table_name,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2711,8 +2713,10 @@ class $$SyncQueueTableAnnotationComposer
   GeneratedColumn<int> get recordId =>
       $composableBuilder(column: $table.recordId, builder: (column) => column);
 
-  GeneratedColumn<String> get tableName =>
-      $composableBuilder(column: $table.tableName, builder: (column) => column);
+  GeneratedColumn<String> get table_name => $composableBuilder(
+    column: $table.table_name,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
@@ -2754,13 +2758,13 @@ class $$SyncQueueTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<int> recordId = const Value.absent(),
-                Value<String> tableName = const Value.absent(),
+                Value<String> table_name = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<int> retries = const Value.absent(),
               }) => SyncQueueCompanion(
                 id: id,
                 recordId: recordId,
-                tableName: tableName,
+                table_name: table_name,
                 status: status,
                 retries: retries,
               ),
@@ -2768,13 +2772,13 @@ class $$SyncQueueTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required int recordId,
-                required String tableName,
+                required String table_name,
                 Value<String> status = const Value.absent(),
                 Value<int> retries = const Value.absent(),
               }) => SyncQueueCompanion.insert(
                 id: id,
                 recordId: recordId,
-                tableName: tableName,
+                table_name: table_name,
                 status: status,
                 retries: retries,
               ),
