@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-// ── Result model returned after every diagnosis ───────────
+// Result model returned after every diagnosis 
 class DiagnosisResult {
   final String crop;
   final String disease;
@@ -25,7 +25,7 @@ class DiagnosisResult {
   }
 }
 
-// ── Main inference engine ─────────────────────────────────
+// Main inference engine 
 class InferenceEngine {
   Interpreter? _interpreter;
   List<String> _labels = [];
@@ -38,7 +38,7 @@ class InferenceEngine {
   static const String _modelPath  = 'assets/model/crop_model.tflite';
   static const String _labelsPath = 'assets/model/labels.txt';
 
-  // ── Load model and labels from assets ──────────────────
+  // Load model and labels from assets
   Future<void> loadModel() async {
     try {
       _interpreter = await Interpreter.fromAsset(_modelPath);
@@ -64,7 +64,7 @@ class InferenceEngine {
     }
   }
 
-  // ── Run diagnosis on a captured image file ──────────────
+  //  Run diagnosis on a captured image file 
   Future<DiagnosisResult> diagnose(File imageFile) async {
     if (!isReady) {
       throw Exception('Model not loaded — call loadModel() first');
@@ -152,7 +152,7 @@ class InferenceEngine {
     );
   }
 
-  // ── Converts "Early_blight" to "Early Blight" ──────────
+  // Converts "Early_blight" to "Early Blight"
   String _formatLabel(String raw) {
     return raw
         .replaceAll('_', ' ')
