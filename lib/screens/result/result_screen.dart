@@ -16,7 +16,7 @@ class _ResultScreenState extends State<ResultScreen> {
   bool _isSaving = false;
   bool _saved    = false;
 
-  // ── Save diagnosis to SQLite ──────────────────────────
+  // Save diagnosis to SQLite 
   Future<void> _saveRecord(ResultArgs args) async {
     if (_saved) return;
     setState(() => _isSaving = true);
@@ -44,7 +44,7 @@ class _ResultScreenState extends State<ResultScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Diagnosis saved successfully'),
+            content: Text(' Diagnosis saved successfully'),
             backgroundColor: AppColors.greenMid,
             behavior: SnackBarBehavior.floating,
           ),
@@ -55,7 +55,7 @@ class _ResultScreenState extends State<ResultScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Save failed: $e'),
+            content: Text(' Save failed: $e'),
             backgroundColor: const Color(0xFFE74C3C),
             behavior: SnackBarBehavior.floating,
           ),
@@ -121,7 +121,7 @@ class _ResultScreenState extends State<ResultScreen> {
       body: Column(
         children: [
 
-          // ── Crop image area ──────────────────────
+          // Crop image area
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.33,
             width: double.infinity,
@@ -230,7 +230,7 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
           ),
 
-          // ── Result body ──────────────────────────
+          // Result body
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
