@@ -15,8 +15,8 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 
-    // Force all subprojects including tflite_flutter to use Java 17
     afterEvaluate {
+        // Fix Java compile options for all subprojects
         extensions
             .findByType<com.android.build.gradle.BaseExtension>()
             ?.compileOptions {
@@ -24,6 +24,8 @@ subprojects {
                 targetCompatibility = JavaVersion.VERSION_17
             }
 
+        // Fix Kotlin JVM target using the NEW compilerOptions DSL
+        // (kotlinOptions is removed in Kotlin 2.0+)
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>()
             .configureEach {
                 compilerOptions {
