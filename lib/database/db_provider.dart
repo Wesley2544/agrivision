@@ -1,6 +1,9 @@
 import 'local_database.dart';
 
-/// A single shared database instance used across the whole app.
+/// Single shared database instance for the entire app.
+/// Access via DBProvider.db anywhere in your code.
 class DBProvider {
-  static final LocalDatabase database = LocalDatabase();
+  DBProvider._();
+
+  static final LocalDatabase db = LocalDatabase();
 }
