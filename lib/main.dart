@@ -10,16 +10,16 @@ void main() async {
   // 1. Initialize AI model
   try {
     await ModelService.instance.initialize();
-    print('✅ AI model loaded');
+    print(' AI model loaded');
   } catch (e) {
-    print('⚠️  AI model failed: $e');
+    print('  AI model failed: $e');
   }
 
   // 2. Seed treatment database (safe — skips if already seeded)
   try {
     await DBProvider.db.treatmentDao.seedIfEmpty();
   } catch (e) {
-    print('⚠️  Treatment seed failed: $e');
+    print('  Treatment seed failed: $e');
   }
 
   runApp(const AgivisionApp());

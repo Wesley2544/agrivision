@@ -38,7 +38,7 @@ class DiagnosisDao extends DatabaseAccessor<LocalDatabase>
     return into(syncQueue).insert(
       SyncQueueCompanion.insert(
         recordId:  diagnosisId,
-        tableName: 'diagnoses',
+        tableRef: 'diagnoses',
       ),
     );
   }
