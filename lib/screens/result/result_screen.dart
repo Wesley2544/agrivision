@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_routes.dart';
 import '../../database/db_provider.dart';
+import '../../database/local_database.dart';
 import '../../models/result_args.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -15,25 +16,49 @@ class ResultScreen extends StatefulWidget {
 class _ResultScreenState extends State<ResultScreen> {
   bool _isSaving = false;
   bool _saved    = false;
+  List<Treatment> _treatments = [];
+  bool _loadingTreatments = true;
 
-  // Save diagnosis to SQLite 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadTreatments();
+  }
+
+  Future<void> _loadTreatments() async {
+    final args = ModalRoute.of(context)?.settings.arguments
+        as ResultArgs?;
+    if (args == null) return;
+
+    final treatments = await DBProvider.db.treatmentDao
+        .getSmartTreatments(args.diagnosis.disease);
+
+    if (mounted) {
+      setState(() {
+        _treatments = treatments;
+        _loadingTreatments = false;
+      });
+    }
+  }
+
   Future<void> _saveRecord(ResultArgs args) async {
     if (_saved) return;
     setState(() => _isSaving = true);
 
     try {
-      final diagnosisId = await DBProvider.database
-          .diagnosisDao
+      final diagnosisId = await DBProvider.db.diagnosisDao
           .insertDiagnosis(
             crop:       args.diagnosis.crop,
             disease:    args.diagnosis.disease,
             confidence: args.diagnosis.confidence,
+            isHealthy:  args.diagnosis.isHealthy,
             imagePath:  args.imagePath,
+            location:   args.gpsResult.label,
+            latitude:   args.gpsResult.latitude,
+            longitude:  args.gpsResult.longitude,
           );
 
-      // Queue for cloud sync when internet is available
-      await DBProvider.database
-          .diagnosisDao
+      await DBProvider.db.diagnosisDao
           .queueForSync(diagnosisId);
 
       setState(() {
@@ -66,11 +91,9 @@ class _ResultScreenState extends State<ResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Read arguments passed from ScanScreen
     final args = ModalRoute.of(context)?.settings.arguments
         as ResultArgs?;
 
-    // Fallback if opened without arguments (e.g. direct route)
     if (args == null) {
       return Scaffold(
         backgroundColor: AppColors.cream,
@@ -86,19 +109,14 @@ class _ResultScreenState extends State<ResultScreen> {
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: AppColors.greenDeep)),
-              const SizedBox(height: 8),
-              const Text('Go back and scan a crop first',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textDim)),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () => Navigator.pushReplacementNamed(
-                    context, AppRoutes.scan),
+                onPressed: () =>
+                    Navigator.pushReplacementNamed(
+                        context, AppRoutes.scan),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.greenMid,
-                  foregroundColor: Colors.white,
-                ),
+                    backgroundColor: AppColors.greenMid,
+                    foregroundColor: Colors.white),
                 child: const Text('Scan a Crop'),
               ),
             ],
@@ -107,12 +125,12 @@ class _ResultScreenState extends State<ResultScreen> {
       );
     }
 
-    final diagnosis  = args.diagnosis;
-    final severityColor = diagnosis.isHealthy
+    final d = args.diagnosis;
+    final severityColor = d.isHealthy
         ? AppColors.greenBright
-        : diagnosis.confidence >= 90
+        : d.confidence >= 90
             ? const Color(0xFFE74C3C)
-            : diagnosis.confidence >= 70
+            : d.confidence >= 70
                 ? AppColors.amber
                 : const Color(0xFF3B82F6);
 
@@ -121,14 +139,15 @@ class _ResultScreenState extends State<ResultScreen> {
       body: Column(
         children: [
 
-          // Crop image area
+          // ── Image area ───────────────────────────
           SizedBox(
-            height: MediaQuery.of(context).size.height * 0.33,
+            height: MediaQuery.of(context).size.height *
+                0.32,
             width: double.infinity,
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Show captured image or gradient fallback
+                // Captured image or fallback
                 args.imagePath.isNotEmpty &&
                         File(args.imagePath).existsSync()
                     ? Image.file(
@@ -138,21 +157,17 @@ class _ResultScreenState extends State<ResultScreen> {
                     : Container(
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
                             colors: [
                               Color(0xFF183D1C),
-                              Color(0xFF2A6030),
+                              Color(0xFF2A6030)
                             ],
                           ),
                         ),
                         child: Center(
-                          child: Icon(
-                            Icons.eco_rounded,
-                            size: 90,
-                            color: Colors.white
-                                .withOpacity(0.2),
-                          ),
+                          child: Icon(Icons.eco_rounded,
+                              size: 90,
+                              color: Colors.white
+                                  .withOpacity(0.2)),
                         ),
                       ),
 
@@ -174,7 +189,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                 ),
 
-                // Back button + status badge
+                // Back + badge
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -200,19 +215,17 @@ class _ResultScreenState extends State<ResultScreen> {
                           ),
                         ),
                         Container(
-                          padding:
-                              const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
-                            color: diagnosis.isHealthy
+                            color: d.isHealthy
                                 ? AppColors.greenMid
                                 : const Color(0xFFE74C3C),
                             borderRadius:
                                 BorderRadius.circular(100),
                           ),
                           child: Text(
-                            diagnosis.isHealthy
+                            d.isHealthy
                                 ? 'HEALTHY'
                                 : 'DISEASE DETECTED',
                             style: const TextStyle(
@@ -230,7 +243,7 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
           ),
 
-          // Result body
+          // ── Body ─────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
@@ -240,25 +253,26 @@ class _ResultScreenState extends State<ResultScreen> {
                     CrossAxisAlignment.start,
                 children: [
 
-                  // Disease name + crop
-                  Text(
-                    diagnosis.disease,
-                    style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.greenDeep),
-                  ),
+                  // Disease name + location
+                  Text(d.disease,
+                      style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.greenDeep)),
                   const SizedBox(height: 3),
                   Row(children: [
                     const Icon(Icons.grass_rounded,
                         size: 12,
                         color: AppColors.textDim),
                     const SizedBox(width: 4),
-                    Text(
-                      '${diagnosis.crop}  ·  ${args.location}',
-                      style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textDim),
+                    Flexible(
+                      child: Text(
+                        '${d.crop}  ·  ${args.gpsResult.label}',
+                        style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textDim),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ]),
                   const SizedBox(height: 14),
@@ -272,11 +286,10 @@ class _ResultScreenState extends State<ResultScreen> {
                           BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.greenDeep
-                              .withOpacity(0.06),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
+                            color: AppColors.greenDeep
+                                .withOpacity(0.06),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3)),
                       ],
                     ),
                     child: Column(children: [
@@ -289,7 +302,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                   fontSize: 10,
                                   color: AppColors.textDim)),
                           Text(
-                            '${diagnosis.confidence.toStringAsFixed(1)}%',
+                            '${d.confidence.toStringAsFixed(1)}%',
                             style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
@@ -302,12 +315,12 @@ class _ResultScreenState extends State<ResultScreen> {
                         borderRadius:
                             BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: diagnosis.confidence / 100,
+                          value: d.confidence / 100,
                           minHeight: 6,
                           backgroundColor:
                               const Color(0xFFE5F0E8),
                           valueColor:
-                              AlwaysStoppedAnimation(
+                              const AlwaysStoppedAnimation(
                                   AppColors.greenBright),
                         ),
                       ),
@@ -315,15 +328,20 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Severity + info cards
+                  // Severity cards
                   Row(children: [
                     _infoCard(
                       icon: Icons.warning_amber_rounded,
                       iconColor: severityColor,
-                      iconBg: severityColor
-                          .withOpacity(0.12),
+                      iconBg: severityColor.withOpacity(0.12),
                       title: 'Severity',
-                      value: diagnosis.severityLevel,
+                      value: d.isHealthy
+                          ? 'None'
+                          : d.confidence >= 90
+                              ? 'High'
+                              : d.confidence >= 70
+                                  ? 'Moderate'
+                                  : 'Low',
                     ),
                     const SizedBox(width: 10),
                     _infoCard(
@@ -331,9 +349,9 @@ class _ResultScreenState extends State<ResultScreen> {
                       iconColor: AppColors.amber,
                       iconBg: AppColors.amberLight,
                       title: 'Spread Risk',
-                      value: diagnosis.isHealthy
+                      value: d.isHealthy
                           ? 'None'
-                          : diagnosis.confidence >= 85
+                          : d.confidence >= 85
                               ? 'High'
                               : 'Moderate',
                     ),
@@ -343,14 +361,12 @@ class _ResultScreenState extends State<ResultScreen> {
                       iconColor: AppColors.greenMid,
                       iconBg: AppColors.greenLight,
                       title: 'Act Within',
-                      value: diagnosis.isHealthy
-                          ? 'N/A'
-                          : '48 hrs',
+                      value: d.isHealthy ? 'N/A' : '48 hrs',
                     ),
                   ]),
                   const SizedBox(height: 12),
 
-                  // Treatment tags
+                  // Treatment section
                   Container(
                     padding: const EdgeInsets.all(13),
                     decoration: BoxDecoration(
@@ -359,71 +375,104 @@ class _ResultScreenState extends State<ResultScreen> {
                           BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.greenDeep
-                              .withOpacity(0.06),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
+                            color: AppColors.greenDeep
+                                .withOpacity(0.06),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3)),
                       ],
                     ),
                     child: Column(
                       crossAxisAlignment:
                           CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                            'RECOMMENDED TREATMENT',
+                        const Text('RECOMMENDED TREATMENT',
                             style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textMid,
                                 letterSpacing: 1)),
                         const SizedBox(height: 10),
-                        if (!diagnosis.isHealthy) ...[
+
+                        if (_loadingTreatments)
+                          const Center(
+                            child: Padding(
+                              padding:
+                                  EdgeInsets.all(12),
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color:
+                                      AppColors.greenMid),
+                            ),
+                          )
+                        else if (_treatments.isEmpty)
+                          _fallbackTreatment(d.disease)
+                        else ...[
+                          // Type filter tabs
                           Row(children: [
-                            _treatTag('Organic',
-                                Colors.green.shade700,
-                                const Color(0xFFA8E6C3),
-                                const Color(0xFFF0FAF4)),
-                            const SizedBox(width: 6),
-                            _treatTag(
-                                'Chemical',
-                                const Color(0xFF8B5E3C),
-                                const Color(0xFFF4C99A),
-                                const Color(0xFFFDF4EC)),
-                            const SizedBox(width: 6),
-                            _treatTag(
-                                'Cultural',
-                                const Color(0xFF1D4ED8),
-                                const Color(0xFF93C5FD),
-                                const Color(0xFFEFF6FF)),
+                            if (_treatments.any(
+                                (t) => t.type == 'organic'))
+                              _treatTag('🌿 Organic',
+                                  Colors.green.shade700,
+                                  const Color(0xFFA8E6C3),
+                                  const Color(0xFFF0FAF4)),
+                            if (_treatments.any(
+                                (t) => t.type == 'chemical'))
+                              ...[const SizedBox(width: 6),
+                              _treatTag('⚗️ Chemical',
+                                  const Color(0xFF8B5E3C),
+                                  const Color(0xFFF4C99A),
+                                  const Color(0xFFFDF4EC))],
+                            if (_treatments.any(
+                                (t) => t.type == 'cultural'))
+                              ...[const SizedBox(width: 6),
+                              _treatTag('🌾 Cultural',
+                                  const Color(0xFF1D4ED8),
+                                  const Color(0xFF93C5FD),
+                                  const Color(0xFFEFF6FF))],
                           ]),
                           const SizedBox(height: 10),
-                          Text(
-                            _getTreatmentAdvice(
-                                diagnosis.disease),
-                            style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textMid,
-                                height: 1.6),
-                          ),
-                        ] else ...[
-                          Row(children: [
-                            _treatTag(
-                                '✅ Healthy Plant',
-                                AppColors.greenMid,
-                                AppColors.greenLight,
-                                const Color(0xFFF0FAF4)),
-                          ]),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Your crop appears healthy. Continue '
-                            'regular monitoring and maintain '
-                            'good agricultural practices.',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textMid,
-                                height: 1.6),
-                          ),
+
+                          // Treatment descriptions
+                          ..._treatments.map((t) => Padding(
+                                padding:
+                                    const EdgeInsets.only(
+                                        bottom: 8),
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment
+                                          .start,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      margin: const EdgeInsets
+                                          .only(
+                                              top: 5,
+                                              right: 8),
+                                      decoration:
+                                          BoxDecoration(
+                                        color: _typeColor(
+                                            t.type),
+                                        shape:
+                                            BoxShape.circle,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        t.description,
+                                        style:
+                                            const TextStyle(
+                                                fontSize:
+                                                    11,
+                                                color: AppColors
+                                                    .textMid,
+                                                height:
+                                                    1.55),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )),
                         ],
                       ],
                     ),
@@ -442,18 +491,15 @@ class _ResultScreenState extends State<ResultScreen> {
                             size: 16),
                         label: const Text('Scan Again'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor:
-                              AppColors.greenMid,
+                          foregroundColor: AppColors.greenMid,
                           side: const BorderSide(
                               color: AppColors.greenBright,
                               width: 1.5),
-                          padding:
-                              const EdgeInsets.symmetric(
-                                  vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12),
                           shape: RoundedRectangleBorder(
                               borderRadius:
-                                  BorderRadius.circular(
-                                      12)),
+                                  BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -465,13 +511,12 @@ class _ResultScreenState extends State<ResultScreen> {
                             : () => _saveRecord(args),
                         icon: _isSaving
                             ? const SizedBox(
-                                width: 14,
-                                height: 14,
+                                width: 14, height: 14,
                                 child:
                                     CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: Colors.white),
-                              )
+                                        color:
+                                            Colors.white))
                             : Icon(
                                 _saved
                                     ? Icons.check_rounded
@@ -487,13 +532,11 @@ class _ResultScreenState extends State<ResultScreen> {
                               ? AppColors.greenBright
                               : AppColors.greenMid,
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(
-                                  vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12),
                           shape: RoundedRectangleBorder(
                               borderRadius:
-                                  BorderRadius.circular(
-                                      12)),
+                                  BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -507,31 +550,26 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  String _getTreatmentAdvice(String disease) {
-    final d = disease.toLowerCase();
-    if (d.contains('blight')) {
-      return 'Apply mancozeb or copper-based fungicide. '
-          'Remove and destroy infected plant tissue. '
-          'Avoid overhead irrigation. Rotate crops '
-          'next season.';
-    } else if (d.contains('mosaic') || d.contains('virus')) {
-      return 'Remove and destroy infected plants immediately. '
-          'Control aphid vectors with insecticide. '
-          'Use virus-resistant seed varieties next season.';
-    } else if (d.contains('rust')) {
-      return 'Apply triazole fungicide at first sign. '
-          'Improve air circulation between plants. '
-          'Avoid wetting foliage during irrigation.';
-    } else if (d.contains('spot')) {
-      return 'Apply copper fungicide or chlorothalonil. '
-          'Remove infected leaves. Avoid working '
-          'in field when plants are wet.';
-    } else {
-      return 'Consult your local agricultural extension '
-          'officer for specific treatment. Remove '
-          'visibly infected tissue and monitor '
-          'surrounding plants closely.';
+  Color _typeColor(String type) {
+    switch (type) {
+      case 'organic':  return Colors.green.shade600;
+      case 'chemical': return const Color(0xFF8B5E3C);
+      case 'cultural': return const Color(0xFF1D4ED8);
+      default:         return AppColors.textMid;
     }
+  }
+
+  Widget _fallbackTreatment(String disease) {
+    return Text(
+      'Consult your local agricultural extension '
+      'officer for specific treatment advice for '
+      '$disease. Remove visibly infected tissue and '
+      'monitor surrounding plants closely.',
+      style: const TextStyle(
+          fontSize: 11,
+          color: AppColors.textMid,
+          height: 1.6),
+    );
   }
 
   Widget _treatTag(String label, Color textColor,
@@ -567,10 +605,9 @@ class _ResultScreenState extends State<ResultScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: AppColors.greenDeep.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
+                color: AppColors.greenDeep.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2)),
           ],
         ),
         child: Column(children: [
@@ -579,8 +616,7 @@ class _ResultScreenState extends State<ResultScreen> {
             decoration: BoxDecoration(
                 color: iconBg,
                 borderRadius: BorderRadius.circular(9)),
-            child:
-                Icon(icon, color: iconColor, size: 16),
+            child: Icon(icon, color: iconColor, size: 16),
           ),
           const SizedBox(height: 6),
           Text(value,
@@ -590,8 +626,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   color: AppColors.textDark)),
           Text(title,
               style: const TextStyle(
-                  fontSize: 8,
-                  color: AppColors.textDim)),
+                  fontSize: 8, color: AppColors.textDim)),
         ]),
       ),
     );

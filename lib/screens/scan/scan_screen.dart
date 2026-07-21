@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_routes.dart';
 import '../../models/result_args.dart';
 import '../../modules/ai/model_service.dart';
+import '../../modules/gis/gis_module.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -18,11 +18,11 @@ class ScanScreen extends StatefulWidget {
 class _ScanScreenState extends State<ScanScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _scanController;
-  late Animation<double> _scanAnimation;
+  late Animation<double>   _scanAnimation;
 
-  bool _flashOn    = false;
-  bool _isAnalyzing = false;
-  String _statusText = 'AI Ready';
+  bool   _flashOn     = false;
+  bool   _isAnalyzing = false;
+  String _statusText  = 'AI Ready';
 
   @override
   void initState() {
@@ -31,8 +31,8 @@ class _ScanScreenState extends State<ScanScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-    _scanAnimation = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(_scanController);
+    _scanAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_scanController);
   }
 
   @override
@@ -41,91 +41,70 @@ class _ScanScreenState extends State<ScanScreen>
     super.dispose();
   }
 
-  // ── Request camera permission ─────────────────────────
-  Future<bool> _requestPermission(Permission permission) async {
-    final status = await permission.request();
+  // ── Request camera permission only ────────────────────────
+  Future<bool> _requestCameraPermission() async {
+    final status = await Permission.camera.request();
+    if (status.isPermanentlyDenied) {
+      await openAppSettings();
+      return false;
+    }
     return status.isGranted;
   }
 
-  // ── Get current GPS location ──────────────────────────
-  Future<String> _getLocation() async {
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return 'Location unavailable';
-
-      LocationPermission perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-        if (perm == LocationPermission.denied) {
-          return 'Location permission denied';
-        }
-      }
-
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 5),
-      );
-      return '${pos.latitude.toStringAsFixed(4)}, '
-          '${pos.longitude.toStringAsFixed(4)}';
-    } catch (_) {
-      return 'Location unavailable';
-    }
-  }
-
-  // ── Core: capture image and run AI ───────────────────
+  // ── Core: capture image → run AI → navigate to result ────
   Future<void> _captureAndDiagnose(ImageSource source) async {
-    // 1. Request permission
-    final permission = source == ImageSource.camera
-        ? Permission.camera
-        : Permission.photos;
-
-    final granted = await _requestPermission(permission);
-    if (!granted) {
-      _showError('Permission denied — please enable it in Settings');
-      return;
+    // 1. Camera permission (only needed for camera, not gallery)
+    if (source == ImageSource.camera) {
+      final granted = await _requestCameraPermission();
+      if (!granted) {
+        _showError(
+            'Camera permission denied. '
+            'Enable it in Settings and try again.');
+        return;
+      }
     }
 
     // 2. Pick image
     final picker = ImagePicker();
     final picked = await picker.pickImage(
-      source: source,
+      source:       source,
       imageQuality: 90,
-      maxWidth: 1024,
-      maxHeight: 1024,
+      maxWidth:     1024,
+      maxHeight:    1024,
     );
     if (picked == null) return; // user cancelled
 
-    // 3. Show loading state
+    // 3. Show analyzing state
     setState(() {
-      _isAnalyzing  = true;
-      _statusText   = 'Analysing crop...';
+      _isAnalyzing = true;
+      _statusText  = 'Analysing crop...';
     });
-    _scanController.repeat(reverse: true);
 
     try {
-      // 4. Get GPS location (runs in parallel with inference)
-      final locationFuture = _getLocation();
+      // 4. Run GPS and AI inference in parallel
+      final gpsFuture =
+          GisModule.instance.getCurrentPosition();
 
-      // 5. Run AI inference
       if (!ModelService.instance.isReady) {
-        throw Exception('AI model is not loaded yet — restart the app');
+        throw Exception(
+            'AI model not loaded — please restart the app');
       }
 
       final result = await ModelService.instance.engine
           .diagnose(File(picked.path));
 
-      final location = await locationFuture;
+      final gpsResult = await gpsFuture;
 
       if (!mounted) return;
 
-      // 6. Navigate to result screen with real data
+      // 5. Navigate to result screen with real data
       Navigator.pushNamed(
         context,
         AppRoutes.result,
         arguments: ResultArgs(
-          diagnosis:  result,
-          imagePath:  picked.path,
-          location:   location,
+          diagnosis: result,
+          imagePath: picked.path,
+          gpsResult: gpsResult,
         ),
       );
     } catch (e) {
@@ -144,9 +123,9 @@ class _ScanScreenState extends State<ScanScreen>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content:         Text(message),
         backgroundColor: const Color(0xFFE74C3C),
-        behavior: SnackBarBehavior.floating,
+        behavior:        SnackBarBehavior.floating,
       ),
     );
   }
@@ -190,6 +169,7 @@ class _ScanScreenState extends State<ScanScreen>
               ),
             ),
 
+            // Subtitle
             Text(
               _isAnalyzing
                   ? 'Running AI diagnosis...'
@@ -207,6 +187,7 @@ class _ScanScreenState extends State<ScanScreen>
                     horizontal: 24),
                 child: Stack(
                   children: [
+
                     // Background
                     Container(
                       width: double.infinity,
@@ -246,7 +227,7 @@ class _ScanScreenState extends State<ScanScreen>
                       ),
                     ),
 
-                    // Scan line animation
+                    // Animated scan line
                     if (!_isAnalyzing)
                       AnimatedBuilder(
                         animation: _scanAnimation,
@@ -283,20 +264,17 @@ class _ScanScreenState extends State<ScanScreen>
                         },
                       ),
 
-                    // Bottom hint
+                    // Bottom hint inside frame
                     if (!_isAnalyzing)
                       Positioned(
-                        bottom: 16,
-                        left: 0,
-                        right: 0,
+                        bottom: 16, left: 0, right: 0,
                         child: Text(
                           'Align leaf within frame',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color:
-                                Colors.white.withOpacity(0.5),
-                            fontSize: 10,
-                          ),
+                              color:
+                                  Colors.white.withOpacity(0.5),
+                              fontSize: 10),
                         ),
                       ),
                   ],
@@ -313,19 +291,17 @@ class _ScanScreenState extends State<ScanScreen>
                     MainAxisAlignment.spaceBetween,
                 children: [
                   _statusTag(
-                    icon: Icons.wifi_off_rounded,
-                    label: 'Offline Mode',
-                    bgColor:
-                        Colors.white.withOpacity(0.08),
-                    textColor:
-                        Colors.white.withOpacity(0.55),
+                    icon:      Icons.wifi_off_rounded,
+                    label:     'Offline Mode',
+                    bgColor:   Colors.white.withOpacity(0.08),
+                    textColor: Colors.white.withOpacity(0.55),
                   ),
                   _statusTag(
                     icon: _isAnalyzing
                         ? Icons.hourglass_top_rounded
                         : Icons.check_circle_outline_rounded,
-                    label: _statusText,
-                    bgColor: _isAnalyzing
+                    label:     _statusText,
+                    bgColor:   _isAnalyzing
                         ? AppColors.amber.withOpacity(0.15)
                         : AppColors.greenBright
                             .withOpacity(0.13),
@@ -352,7 +328,7 @@ class _ScanScreenState extends State<ScanScreen>
                     CrossAxisAlignment.center,
                 children: [
 
-                  // Gallery button
+                  // Gallery
                   GestureDetector(
                     onTap: _isAnalyzing
                         ? null
@@ -361,15 +337,15 @@ class _ScanScreenState extends State<ScanScreen>
                     child: Container(
                       width: 48, height: 48,
                       decoration: BoxDecoration(
-                        color: Colors.white
-                            .withOpacity(0.1),
+                        color:
+                            Colors.white.withOpacity(0.1),
                         borderRadius:
                             BorderRadius.circular(14),
                       ),
                       child: Icon(
                         Icons.photo_library_outlined,
-                        color: Colors.white
-                            .withOpacity(0.8),
+                        color:
+                            Colors.white.withOpacity(0.8),
                         size: 22,
                       ),
                     ),
@@ -382,8 +358,8 @@ class _ScanScreenState extends State<ScanScreen>
                         : () => _captureAndDiagnose(
                             ImageSource.camera),
                     child: AnimatedContainer(
-                      duration:
-                          const Duration(milliseconds: 200),
+                      duration: const Duration(
+                          milliseconds: 200),
                       width: 70, height: 70,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -391,8 +367,8 @@ class _ScanScreenState extends State<ScanScreen>
                             ? Colors.grey.shade600
                             : Colors.white,
                         border: Border.all(
-                          color: Colors.white
-                              .withOpacity(0.3),
+                          color:
+                              Colors.white.withOpacity(0.3),
                           width: 4,
                         ),
                         boxShadow: [
@@ -408,8 +384,10 @@ class _ScanScreenState extends State<ScanScreen>
                       ),
                       child: _isAnalyzing
                           ? const Padding(
-                              padding: EdgeInsets.all(18),
-                              child: CircularProgressIndicator(
+                              padding:
+                                  EdgeInsets.all(18),
+                              child:
+                                  CircularProgressIndicator(
                                 strokeWidth: 2.5,
                                 color: Colors.white,
                               ),
@@ -421,10 +399,9 @@ class _ScanScreenState extends State<ScanScreen>
                                 shape: BoxShape.circle,
                                 color: Colors.white,
                                 border: Border.all(
-                                  color:
-                                      Colors.grey.shade300,
-                                  width: 2,
-                                ),
+                                    color: Colors
+                                        .grey.shade300,
+                                    width: 2),
                               ),
                             ),
                     ),
@@ -434,7 +411,8 @@ class _ScanScreenState extends State<ScanScreen>
                   Container(
                     width: 48, height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color:
+                          Colors.white.withOpacity(0.1),
                       borderRadius:
                           BorderRadius.circular(14),
                     ),
@@ -453,6 +431,8 @@ class _ScanScreenState extends State<ScanScreen>
       ),
     );
   }
+
+  // ── Widgets ───────────────────────────────────────────────
 
   Widget _analyzingOverlay() {
     return Center(
@@ -475,7 +455,7 @@ class _ScanScreenState extends State<ScanScreen>
                   fontSize: 14,
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
-          Text('This runs fully offline',
+          Text('Fully offline — no internet needed',
               style: TextStyle(
                   color: Colors.white.withOpacity(0.5),
                   fontSize: 11)),
@@ -532,7 +512,7 @@ class _ScanScreenState extends State<ScanScreen>
   }
 }
 
-// ── Corner painter (unchanged from before) ────────────────
+// ── Corner bracket painter ────────────────────────────────
 class _CornerPainter extends CustomPainter {
   final Color color;
   _CornerPainter({required this.color});
@@ -540,29 +520,38 @@ class _CornerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color      = color
-      ..strokeWidth = 2.5
-      ..style      = PaintingStyle.stroke
-      ..strokeCap  = StrokeCap.round;
+      ..color       = color
+      ..strokeWidth  = 2.5
+      ..style       = PaintingStyle.stroke
+      ..strokeCap   = StrokeCap.round;
 
     const length  = 24.0;
     const padding = 12.0;
 
     final corners = [
-      [Offset(padding, padding + length),
-       Offset(padding, padding),
-       Offset(padding + length, padding)],
-      [Offset(size.width - padding - length, padding),
-       Offset(size.width - padding, padding),
-       Offset(size.width - padding, padding + length)],
-      [Offset(padding, size.height - padding - length),
-       Offset(padding, size.height - padding),
-       Offset(padding + length, size.height - padding)],
-      [Offset(size.width - padding - length,
-               size.height - padding),
-       Offset(size.width - padding, size.height - padding),
-       Offset(size.width - padding,
-               size.height - padding - length)],
+      [
+        Offset(padding, padding + length),
+        Offset(padding, padding),
+        Offset(padding + length, padding),
+      ],
+      [
+        Offset(size.width - padding - length, padding),
+        Offset(size.width - padding, padding),
+        Offset(size.width - padding, padding + length),
+      ],
+      [
+        Offset(padding, size.height - padding - length),
+        Offset(padding, size.height - padding),
+        Offset(padding + length, size.height - padding),
+      ],
+      [
+        Offset(size.width - padding - length,
+            size.height - padding),
+        Offset(size.width - padding,
+            size.height - padding),
+        Offset(size.width - padding,
+            size.height - padding - length),
+      ],
     ];
 
     for (final c in corners) {

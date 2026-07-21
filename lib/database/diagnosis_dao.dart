@@ -3,73 +3,110 @@ import 'local_database.dart';
 
 part 'diagnosis_dao.g.dart';
 
-@DriftAccessor(tables: [Diagnoses, GpsLogs, SyncQueue])
+@DriftAccessor(tables: [Diagnoses, SyncQueue])
 class DiagnosisDao extends DatabaseAccessor<LocalDatabase>
     with _$DiagnosisDaoMixin {
   DiagnosisDao(LocalDatabase db) : super(db);
 
-  /// Saves a new diagnosis and returns its generated ID.
+  // ── Write ─────────────────────────────────────────────
+
   Future<int> insertDiagnosis({
     required String crop,
     required String disease,
     required double confidence,
+    required bool isHealthy,
     String? imagePath,
+    String? location,
+    double? latitude,
+    double? longitude,
   }) {
     return into(diagnoses).insert(
       DiagnosesCompanion.insert(
-        crop: crop,
-        disease: disease,
+        crop:       crop,
+        disease:    disease,
         confidence: confidence,
-        imagePath: Value(imagePath),
+        isHealthy:  Value(isHealthy),
+        imagePath:  Value(imagePath),
+        location:   Value(location),
+        latitude:   Value(latitude),
+        longitude:  Value(longitude),
       ),
     );
   }
 
-  /// Returns all diagnoses, most recent first.
+  Future<int> queueForSync(int diagnosisId) {
+    return into(syncQueue).insert(
+      SyncQueueCompanion.insert(
+        recordId:  diagnosisId,
+        tableRef: 'diagnoses',
+      ),
+    );
+  }
+
+  Future<void> markSynced(int syncId) {
+    return (update(syncQueue)
+          ..where((t) => t.id.equals(syncId)))
+        .write(const SyncQueueCompanion(
+            status: Value('synced')));
+  }
+
+  // ── Read ──────────────────────────────────────────────
+
+  /// All diagnoses ordered newest first — used for one-time reads
   Future<List<Diagnosis>> getAllDiagnoses() {
     return (select(diagnoses)
-          ..orderBy([(t) => OrderingTerm.desc(t.timestamp)]))
+          ..orderBy(
+              [(t) => OrderingTerm.desc(t.timestamp)]))
         .get();
   }
+
+  /// Live stream — History screen rebuilds automatically
+  /// whenever a new diagnosis is saved
   Stream<List<Diagnosis>> watchAllDiagnoses() {
     return (select(diagnoses)
-          ..orderBy([(t) => OrderingTerm.desc(t.timestamp)]))
+          ..orderBy(
+              [(t) => OrderingTerm.desc(t.timestamp)]))
         .watch();
   }
-  /// Attaches a GPS location to a diagnosis record.
-  Future<int> insertGpsLog({
-    required int diagnosisId,
-    required double latitude,
-    required double longitude,
-  }) {
-    return into(gpsLogs).insert(
-      GpsLogsCompanion.insert(
-        diagnosisId: diagnosisId,
-        latitude: latitude,
-        longitude: longitude,
-      ),
-    );
+
+  /// Diagnoses that have GPS coordinates — used by Map screen
+  Future<List<Diagnosis>> getDiagnosesWithGps() async {
+    final all = await getAllDiagnoses();
+    return all
+        .where((d) =>
+            d.latitude != null && d.longitude != null)
+        .toList();
   }
 
-  /// Adds a record to the sync queue (called whenever offline).
-  Future<int> queueForSync(int diagnosisId) {
-  return into(syncQueue).insert(
-    SyncQueueCompanion.insert(
-      recordId: diagnosisId,
-      table_name: 'diagnoses',
-      ),
-    );
-  }
-
-  /// Returns records still waiting to be synced to the cloud.
+  /// Records waiting to sync — used by SyncEngine
   Future<List<SyncQueueData>> getPendingSync() {
-    return (select(syncQueue)..where((t) => t.status.equals('pending')))
+    return (select(syncQueue)
+          ..where((t) => t.status.equals('pending')))
         .get();
   }
 
-  /// Marks a queued record as successfully synced.
-  Future<void> markSynced(int syncId) {
-    return (update(syncQueue)..where((t) => t.id.equals(syncId)))
-        .write(const SyncQueueCompanion(status: Value('synced')));
+  // ── Stats for Home dashboard ──────────────────────────
+
+  Future<int> getTotalCount() async {
+    final all = await getAllDiagnoses();
+    return all.length;
+  }
+
+  Future<int> getDiseaseCount() async {
+    final all = await getAllDiagnoses();
+    return all.where((d) => !d.isHealthy).length;
+  }
+
+  Future<int> getHealthyCount() async {
+    final all = await getAllDiagnoses();
+    return all.where((d) => d.isHealthy).length;
+  }
+
+  Future<double> getAverageConfidence() async {
+    final all = await getAllDiagnoses();
+    if (all.isEmpty) return 0.0;
+    final total =
+        all.fold<double>(0, (sum, d) => sum + d.confidence);
+    return total / all.length;
   }
 }
