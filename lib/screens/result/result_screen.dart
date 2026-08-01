@@ -167,7 +167,7 @@ class _ResultScreenState extends State<ResultScreen> {
                           child: Icon(Icons.eco_rounded,
                               size: 90,
                               color: Colors.white
-                                  .withOpacity(0.2)),
+                                  .withValues(alpha: 0.2)),
                         ),
                       ),
 
@@ -181,7 +181,7 @@ class _ResultScreenState extends State<ResultScreen> {
                         colors: [
                           Colors.transparent,
                           AppColors.cream
-                              .withOpacity(0.95),
+                              .withValues(alpha: 0.95),
                         ],
                         stops: const [0.35, 1.0],
                       ),
@@ -206,7 +206,7 @@ class _ResultScreenState extends State<ResultScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.black
-                                  .withOpacity(0.3),
+                                  .withValues(alpha: 0.3),
                             ),
                             child: const Icon(
                                 Icons.chevron_left_rounded,
@@ -287,7 +287,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       boxShadow: [
                         BoxShadow(
                             color: AppColors.greenDeep
-                                .withOpacity(0.06),
+                                .withValues(alpha: 0.06),
                             blurRadius: 10,
                             offset: const Offset(0, 3)),
                       ],
@@ -333,7 +333,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     _infoCard(
                       icon: Icons.warning_amber_rounded,
                       iconColor: severityColor,
-                      iconBg: severityColor.withOpacity(0.12),
+                      iconBg: severityColor.withValues(alpha: 0.12),
                       title: 'Severity',
                       value: d.isHealthy
                           ? 'None'
@@ -376,7 +376,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       boxShadow: [
                         BoxShadow(
                             color: AppColors.greenDeep
-                                .withOpacity(0.06),
+                                .withValues(alpha: 0.06),
                             blurRadius: 10,
                             offset: const Offset(0, 3)),
                       ],
@@ -605,7 +605,7 @@ class _ResultScreenState extends State<ResultScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-                color: AppColors.greenDeep.withOpacity(0.05),
+                color: AppColors.greenDeep.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2)),
           ],

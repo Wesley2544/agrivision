@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-// Result model returned after every diagnosis 
 class DiagnosisResult {
   final String crop;
   final String disease;
@@ -18,103 +17,98 @@ class DiagnosisResult {
   });
 
   String get severityLevel {
-    if (isHealthy) return 'None';
-    if (confidence >= 90) return 'High';
-    if (confidence >= 70) return 'Moderate';
+    if (isHealthy)            return 'None';
+    if (confidence >= 90)     return 'High';
+    if (confidence >= 70)     return 'Moderate';
     return 'Low';
   }
 }
 
-// Main inference engine 
 class InferenceEngine {
   Interpreter? _interpreter;
-  List<String> _labels = [];
-  bool _isLoaded = false;
+  List<String>  _labels   = [];
+  bool          _isLoaded = false;
+  String?       _lastError;
 
-  bool get isReady => _isLoaded && _interpreter != null;
-  int get numClasses => _labels.length;
+  bool    get isReady   => _isLoaded && _interpreter != null;
+  int     get numClasses => _labels.length;
+  String? get lastError  => _lastError;
 
-  static const int inputSize  = 224;
+  static const int    inputSize   = 224;
   static const String _modelPath  = 'assets/model/crop_model.tflite';
   static const String _labelsPath = 'assets/model/labels.txt';
+  static const double _threshold  = 55.0;
 
-  // Load model and labels from assets
   Future<void> loadModel() async {
     try {
-      _interpreter = await Interpreter.fromAsset(_modelPath);
+      // Load bytes directly — more reliable than fromAsset on all devices
+      final ByteData modelData = await rootBundle.load(_modelPath);
+      final Uint8List modelBytes = modelData.buffer.asUint8List(
+        modelData.offsetInBytes,
+        modelData.lengthInBytes,
+      );
 
-      final raw = await rootBundle.loadString(_labelsPath);
-      _labels   = raw
+      _interpreter = Interpreter.fromBuffer(modelBytes);
+
+      // Load labels
+      final String labelsRaw =
+          await rootBundle.loadString(_labelsPath);
+      _labels = labelsRaw
           .split('\n')
           .map((e) => e.trim())
           .where((e) => e.isNotEmpty)
           .toList();
 
-      _isLoaded = true;
+      _isLoaded  = true;
+      _lastError = null;
 
       final inShape  = _interpreter!.getInputTensor(0).shape;
       final outShape = _interpreter!.getOutputTensor(0).shape;
-      print('✅ Model loaded — ${_labels.length} classes');
-      print('   Input  shape: $inShape');
-      print('   Output shape: $outShape');
+      print(' Model loaded — ${_labels.length} classes');
+      print('   Input : $inShape');
+      print('   Output: $outShape');
     } catch (e) {
-      _isLoaded = false;
-      print('❌ Model failed to load: $e');
+      _isLoaded  = false;
+      _lastError = e.toString();
+      print(' Model failed to load: $e');
       rethrow;
     }
   }
 
-  //  Run diagnosis on a captured image file 
   Future<DiagnosisResult> diagnose(File imageFile) async {
     if (!isReady) {
-      throw Exception('Model not loaded — call loadModel() first');
+      throw Exception(
+          'Model not loaded. Error: ${_lastError ?? "unknown"}');
     }
 
-    // 1. Decode and resize image to 224×224
     final bytes   = await imageFile.readAsBytes();
     final decoded = img.decodeImage(bytes);
-    if (decoded == null) throw Exception('Could not decode image file');
+    if (decoded == null) throw Exception('Could not decode image');
 
-    final resized = img.copyResize(
-      decoded,
-      width:  inputSize,
-      height: inputSize,
-    );
+    final resized = img.copyResize(decoded,
+        width: inputSize, height: inputSize);
 
-    // 2. Build float32 input tensor [1, 224, 224, 3]
-    //    Normalization is inside the model so we pass raw 0-255 values
-    final input = List.generate(
-      1,
-      (_) => List.generate(
-        inputSize,
-        (y) => List.generate(
-          inputSize,
-          (x) {
-            final pixel = resized.getPixel(x, y);
-            return [
-              pixel.r.toDouble(),
-              pixel.g.toDouble(),
-              pixel.b.toDouble(),
-            ];
-          },
-        ),
-      ),
-    );
+    // Build float32 input tensor — normalization inside model
+    final input = [
+      List.generate(inputSize, (y) =>
+        List.generate(inputSize, (x) {
+          final pixel = resized.getPixel(x, y);
+          return [
+            pixel.r.toDouble(),
+            pixel.g.toDouble(),
+            pixel.b.toDouble(),
+          ];
+        })),
+    ];
 
-    // 3. Prepare output tensor [1, num_classes]
-    final output = List.generate(
-      1,
-      (_) => List.filled(_labels.length, 0.0),
-    );
+    final output =
+        List.generate(1, (_) => List.filled(_labels.length, 0.0));
 
-    // 4. Run the model
     _interpreter!.run(input, output);
 
-    // 5. Find the highest scoring class
-    final scores    = output[0];
-    int bestIndex   = 0;
+    final scores = output[0];
+    int    bestIndex = 0;
     double bestScore = 0.0;
-
     for (int i = 0; i < scores.length; i++) {
       if (scores[i] > bestScore) {
         bestScore = scores[i];
@@ -122,10 +116,17 @@ class InferenceEngine {
       }
     }
 
-    // 6. Parse the raw label into crop + disease
-    //    PlantVillage format: "Tomato___Early_blight"
-    //    Some use single underscore: "Tomato_Early_blight"
-    final raw   = _labels[bestIndex];
+    // Return uncertain if below threshold
+    if (bestScore * 100 < _threshold) {
+      return const DiagnosisResult(
+        crop:       'Unknown',
+        disease:    'Uncertain — low confidence',
+        confidence: 0,
+        isHealthy:  false,
+      );
+    }
+
+    final raw = _labels[bestIndex];
     String crop;
     String disease;
 
@@ -133,13 +134,12 @@ class InferenceEngine {
       final parts = raw.split('___');
       crop    = _formatLabel(parts[0]);
       disease = _formatLabel(parts[1]);
-    } else if (raw.contains('_')) {
-      final parts = raw.split('_');
-      crop    = parts[0];
-      disease = parts.sublist(1).join(' ');
     } else {
-      crop    = raw;
-      disease = raw;
+      final parts = raw.split('_');
+      crop    = parts.isNotEmpty ? parts[0] : raw;
+      disease = parts.length > 1
+          ? parts.sublist(1).join(' ')
+          : raw;
     }
 
     final isHealthy = disease.toLowerCase().contains('healthy');
@@ -152,7 +152,6 @@ class InferenceEngine {
     );
   }
 
-  // Converts "Early_blight" to "Early Blight"
   String _formatLabel(String raw) {
     return raw
         .replaceAll('_', ' ')

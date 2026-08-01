@@ -134,7 +134,7 @@ class _MapScreenState extends State<MapScreen> {
                         'diagnosis${_gpsData.length != 1 ? "es" : ""}',
                         style: TextStyle(
                             color: Colors.white
-                                .withOpacity(0.55),
+                                .withValues(alpha: 0.55),
                             fontSize: 10),
                       ),
                     ],
@@ -150,20 +150,20 @@ class _MapScreenState extends State<MapScreen> {
                           horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color:
-                            Colors.white.withOpacity(0.13),
+                            Colors.white.withValues(alpha: 0.13),
                         borderRadius:
                             BorderRadius.circular(10),
                       ),
                       child: Row(children: [
                         Icon(Icons.refresh_rounded,
                             color: Colors.white
-                                .withOpacity(0.75),
+                                .withValues(alpha: 0.75),
                             size: 14),
                         const SizedBox(width: 4),
                         Text('Refresh',
                             style: TextStyle(
                                 color: Colors.white
-                                    .withOpacity(0.75),
+                                    .withValues(alpha: 0.75),
                                 fontSize: 10,
                                 fontWeight:
                                     FontWeight.w600)),
@@ -183,7 +183,7 @@ class _MapScreenState extends State<MapScreen> {
                   horizontal: 14, vertical: 8),
               scrollDirection: Axis.horizontal,
               itemCount: _filters.length,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (_, _) =>
                   const SizedBox(width: 8),
               itemBuilder: (_, i) {
                 final sel =
@@ -265,7 +265,7 @@ class _MapScreenState extends State<MapScreen> {
                                             .all(10),
                                     decoration: BoxDecoration(
                                       color: Colors.white
-                                          .withOpacity(0.93),
+                                          .withValues(alpha: 0.93),
                                       borderRadius:
                                           BorderRadius
                                               .circular(12),
@@ -273,8 +273,8 @@ class _MapScreenState extends State<MapScreen> {
                                         BoxShadow(
                                             color: Colors
                                                 .black
-                                                .withOpacity(
-                                                    0.08),
+                                                .withValues(
+                                                    alpha: 0.08),
                                             blurRadius: 8)
                                       ],
                                     ),
@@ -310,15 +310,15 @@ class _MapScreenState extends State<MapScreen> {
                                     width: 36, height: 36,
                                     decoration: BoxDecoration(
                                       color: Colors.white
-                                          .withOpacity(0.9),
+                                          .withValues(alpha: 0.9),
                                       shape:
                                           BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
                                             color: Colors
                                                 .black
-                                                .withOpacity(
-                                                    0.1),
+                                                .withValues(
+                                                    alpha: 0.1),
                                             blurRadius: 6)
                                       ],
                                     ),
@@ -367,7 +367,7 @@ class _MapScreenState extends State<MapScreen> {
                       color: Colors.white, width: 2),
                   boxShadow: [
                     BoxShadow(
-                        color: color.withOpacity(0.4),
+                        color: color.withValues(alpha: 0.4),
                         blurRadius: 8)
                   ],
                 ),
@@ -468,7 +468,7 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           Icon(Icons.location_off_outlined,
               size: 56,
-              color: AppColors.textDim.withOpacity(0.4)),
+              color: AppColors.textDim.withValues(alpha: 0.4)),
           const SizedBox(height: 14),
           const Text('No GPS data yet',
               style: TextStyle(
@@ -537,9 +537,10 @@ class _MapScreenState extends State<MapScreen> {
           final active = i == 2;
           return GestureDetector(
             onTap: () {
-              if (!active)
+              if (!active) {
                 Navigator.pushReplacementNamed(
                     context, items[i].$4);
+              }
             },
             child: Column(children: [
               Container(
@@ -586,10 +587,12 @@ class _GridPainter extends CustomPainter {
       ..color = const Color(0xFFDCE9DE)
       ..strokeWidth = 1;
     const step = 22.0;
-    for (double x = 0; x < size.width; x += step)
+    for (double x = 0; x < size.width; x += step) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    for (double y = 0; y < size.height; y += step)
+    }
+    for (double y = 0; y < size.height; y += step) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
   }
   @override bool shouldRepaint(_) => false;
 }
@@ -598,7 +601,7 @@ class _RoadPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFA0C3A3).withOpacity(0.5)
+      ..color = const Color(0xFFA0C3A3).withValues(alpha: 0.5)
       ..strokeWidth = 5
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(Offset(0, size.height * 0.35),

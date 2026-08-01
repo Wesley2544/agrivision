@@ -53,10 +53,10 @@ class _SplashScreenState extends State<SplashScreen> {
                   width: 90,
                   height: 90,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(26),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       width: 1.5,
                     ),
                   ),
@@ -93,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   'AI-Powered Crop Disease Diagnosis\nWorks Completely Offline',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.65),
+                    color: Colors.white.withValues(alpha: 0.65),
                     fontSize: 13,
                     height: 1.6,
                     letterSpacing: 0.5,
@@ -117,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withValues(alpha: 0.2),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -147,7 +147,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: RichText(
                     text: TextSpan(
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.55),
+                        color: Colors.white.withValues(alpha: 0.55),
                         fontSize: 12,
                       ),
                       children: const [

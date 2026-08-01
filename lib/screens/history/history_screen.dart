@@ -148,13 +148,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     vertical: 6),
                             decoration: BoxDecoration(
                               color: Colors.white
-                                  .withOpacity(0.15),
+                                  .withValues(alpha: 0.15),
                               borderRadius:
                                   BorderRadius.circular(
                                       12),
                               border: Border.all(
                                   color: Colors.white
-                                      .withOpacity(0.2)),
+                                      .withValues(alpha: 0.2)),
                             ),
                             child: Text(
                               '${allDiagnoses.length} Total',
@@ -174,12 +174,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         height: 42,
                         decoration: BoxDecoration(
                           color:
-                              Colors.white.withOpacity(0.15),
+                              Colors.white.withValues(alpha: 0.15),
                           borderRadius:
                               BorderRadius.circular(12),
                           border: Border.all(
                               color: Colors.white
-                                  .withOpacity(0.2)),
+                                  .withValues(alpha: 0.2)),
                         ),
                         child: TextField(
                           controller: _searchCtrl,
@@ -193,12 +193,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 'Search crop or disease...',
                             hintStyle: TextStyle(
                                 color: Colors.white
-                                    .withOpacity(0.5),
+                                    .withValues(alpha: 0.5),
                                 fontSize: 12),
                             prefixIcon: Icon(
                                 Icons.search_rounded,
                                 color: Colors.white
-                                    .withOpacity(0.6),
+                                    .withValues(alpha: 0.6),
                                 size: 20),
                             suffixIcon:
                                 _searchQuery.isNotEmpty
@@ -215,8 +215,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                                 .close_rounded,
                                             color: Colors
                                                 .white
-                                                .withOpacity(
-                                                    0.6),
+                                                .withValues(
+                                                    alpha: 0.6),
                                             size: 18),
                                       )
                                     : null,
@@ -262,7 +262,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       horizontal: 14, vertical: 8),
                   scrollDirection: Axis.horizontal,
                   itemCount: _filters.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const SizedBox(width: 8),
                   itemBuilder: (_, i) {
                     final sel = _filters[i] == _filter;
@@ -327,7 +327,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 const EdgeInsets.fromLTRB(
                                     14, 0, 14, 14),
                             itemCount: filtered.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(height: 8),
                             itemBuilder: (ctx, i) =>
                                 _diagnosisCard(
@@ -358,7 +358,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.greenDeep.withOpacity(0.06),
+              color: AppColors.greenDeep.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -371,7 +371,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             width: 46, height: 46,
             decoration: BoxDecoration(
               color: d.isHealthy
-                  ? AppColors.greenLight.withOpacity(0.5)
+                  ? AppColors.greenLight.withValues(alpha: 0.5)
                   : const Color(0xFFFEE2E2),
               borderRadius: BorderRadius.circular(13),
             ),
@@ -406,7 +406,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: AppColors.greenMid
-                            .withOpacity(0.1),
+                            .withValues(alpha: 0.1),
                         borderRadius:
                             BorderRadius.circular(100),
                       ),
@@ -505,7 +505,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 width: 50, height: 50,
                 decoration: BoxDecoration(
                   color: d.isHealthy
-                      ? AppColors.greenLight.withOpacity(0.5)
+                      ? AppColors.greenLight.withValues(alpha: 0.5)
                       : const Color(0xFFFEE2E2),
                   borderRadius: BorderRadius.circular(15),
                 ),
@@ -543,7 +543,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.greenMid.withOpacity(0.1),
+                  color: AppColors.greenMid.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -643,10 +643,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         padding: const EdgeInsets.symmetric(
             vertical: 7, horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
+          color: Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(11),
           border: Border.all(
-              color: Colors.white.withOpacity(0.1)),
+              color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -663,7 +663,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         fontWeight: FontWeight.w800)),
                 Text(label,
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 8)),
               ],
             ),
@@ -679,7 +679,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       Container(
         width: 32, height: 32,
         decoration: BoxDecoration(
-          color: AppColors.greenLight.withOpacity(0.4),
+          color: AppColors.greenLight.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(9),
         ),
         child: Icon(icon,
@@ -709,7 +709,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         children: [
           Icon(Icons.history_rounded,
               size: 64,
-              color: AppColors.textDim.withOpacity(0.3)),
+              color: AppColors.textDim.withValues(alpha: 0.3)),
           const SizedBox(height: 14),
           Text(
             noDataAtAll

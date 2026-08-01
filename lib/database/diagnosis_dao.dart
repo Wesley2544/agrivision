@@ -6,7 +6,7 @@ part 'diagnosis_dao.g.dart';
 @DriftAccessor(tables: [Diagnoses, SyncQueue])
 class DiagnosisDao extends DatabaseAccessor<LocalDatabase>
     with _$DiagnosisDaoMixin {
-  DiagnosisDao(LocalDatabase db) : super(db);
+  DiagnosisDao(super.db);
 
   // ── Write ─────────────────────────────────────────────
 

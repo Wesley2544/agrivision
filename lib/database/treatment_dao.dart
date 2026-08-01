@@ -6,7 +6,7 @@ part 'treatment_dao.g.dart';
 @DriftAccessor(tables: [Treatments])
 class TreatmentDao extends DatabaseAccessor<LocalDatabase>
     with _$TreatmentDaoMixin {
-  TreatmentDao(LocalDatabase db) : super(db);
+  TreatmentDao(super.db);
 
   // ── Read ──────────────────────────────────────────────
 
@@ -63,7 +63,7 @@ class TreatmentDao extends DatabaseAccessor<LocalDatabase>
           )));
     });
 
-    print('✅ Treatment database seeded with '
+    print(' Treatment database seeded with '
         '${_seedData.length} entries');
   }
 

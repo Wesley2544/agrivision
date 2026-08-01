@@ -1,6 +1,9 @@
+import 'package:agrivision/modules/sync/sync_engine.dart';
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_routes.dart';
+import '../../database/db_provider.dart';
+import '../../database/local_database.dart'; 
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -39,7 +42,7 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           Text('Good morning,',
                               style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: Colors.white.withValues(alpha: 0.6),
                                   fontSize: 11)),
                           const Text('Wisley Otieno',
                               style: TextStyle(
@@ -50,7 +53,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       CircleAvatar(
                         radius: 18,
-                        backgroundColor: Colors.white.withOpacity(0.2),
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
                         child: const Icon(Icons.person_outline_rounded,
                             color: Colors.white, size: 20),
                       ),
@@ -59,13 +62,28 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Stats row
-                  Row(children: [
-                    _statPill('24', 'Diagnoses'),
-                    const SizedBox(width: 8),
-                    _statPill('3', 'Alerts'),
-                    const SizedBox(width: 8),
-                    _statPill('91%', 'Accuracy'),
-                  ]),
+                  FutureBuilder<List<Diagnosis>>(
+                    future: DBProvider.db.diagnosisDao.getAllDiagnoses(),
+                    builder: (context, snapshot) {
+                      final records = snapshot.data ?? [];
+                      final total   = records.length;
+                      final disease = records.where((d) => !d.isHealthy).length;
+                      final avgConf = records.isEmpty
+                          ? 0.0
+                          : records.fold<double>(
+                                  0, (s, d) => s + d.confidence) /
+                              records.length;
+                      return Row(children: [
+                        _statPill('$total', 'Diagnoses'),
+                        const SizedBox(width: 8),
+                        _statPill('$disease', 'Alerts'),
+                        const SizedBox(width: 8),
+                        _statPill(
+                            '${avgConf.toStringAsFixed(0)}%', 'Accuracy'),
+                      ]);
+                    },
+                  ),
+                  _syncStatus(),
                 ],
               ),
             ),
@@ -99,7 +117,7 @@ class HomeScreen extends StatelessWidget {
                         Container(
                           width: 38, height: 38,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.camera_alt_outlined,
@@ -150,17 +168,76 @@ class HomeScreen extends StatelessWidget {
                   ]),
 
                   const SizedBox(height: 18),
+                  
+                  // ── Recent Diagnoses ─────────────────────────────
                   _sectionLabel('Recent Diagnoses'),
                   const SizedBox(height: 10),
+                  FutureBuilder<List<Diagnosis>>(
+                    future: DBProvider.db.diagnosisDao.getAllDiagnoses(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(
+                                color: AppColors.greenMid,
+                                strokeWidth: 2),
+                          ),
+                        );
+                      }
 
-                  _recentItem('Maize', 'Northern Leaf Blight',
-                      '94%', const Color(0xFFE74C3C)),
-                  const SizedBox(height: 6),
-                  _recentItem('Tomato', 'Early Blight',
-                      '87%', AppColors.amber),
-                  const SizedBox(height: 6),
-                  _recentItem('Bean', 'Healthy ✓',
-                      '99%', AppColors.greenBright),
+                      final records = snapshot.data ?? [];
+
+                      if (records.isEmpty) {
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.greenDeep
+                                    .withValues(alpha: 0.05),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'No diagnoses yet — scan a crop to get started',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textDim),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Show latest 3 diagnoses
+                      final latest = records.take(3).toList();
+                      return Column(
+                        children: latest.map((d) {
+                          final dotColor = d.isHealthy
+                              ? AppColors.greenBright
+                              : d.confidence >= 90
+                                  ? const Color(0xFFE74C3C)
+                                  : AppColors.amber;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: _recentItem(
+                              d.crop,
+                              d.disease,
+                              '${d.confidence.toStringAsFixed(0)}%',
+                              dotColor,
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -178,9 +255,9 @@ class HomeScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
+          color: Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Column(children: [
           Text(value,
@@ -191,9 +268,58 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 2),
           Text(label,
               style: TextStyle(
-                  color: Colors.white.withOpacity(0.5), fontSize: 8)),
+                  color: Colors.white.withValues(alpha: 0.5), fontSize: 8)),
         ]),
       ),
+    );
+  }
+
+  Widget _syncStatus(){
+    return FutureBuilder<int>(
+      future: SyncEngine.instance.getPendingCount(),
+      builder: (context, snapshot) {
+        final count= snapshot.data ?? 0;
+        if (count==0) return const SizedBox.shrink();
+        return GestureDetector(
+          onTap: () async {
+            final result= await SyncEngine.instance.syncNow();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(result.message),
+                  backgroundColor: result.success
+                      ? AppColors.greenMid
+                      : const Color(0xFFE74C3C),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children:[
+                const Icon(Icons.sync_rounded, color: Colors.white, size: 14),
+                const SizedBox(width:6),
+                Text(
+                  '$count unsynced — tap to sync now',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -222,7 +348,7 @@ class HomeScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-                color: AppColors.greenDeep.withOpacity(0.07),
+                color: AppColors.greenDeep.withValues(alpha: 0.07),
                 blurRadius: 10,
                 offset: const Offset(0, 3)),
           ],
@@ -262,7 +388,7 @@ class HomeScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 6,
               offset: const Offset(0, 2)),
         ],

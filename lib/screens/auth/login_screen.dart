@@ -50,10 +50,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     width: 58, height: 58,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                          color: Colors.white.withOpacity(0.25), width: 1),
+                          color: Colors.white.withValues(alpha: 0.25), width: 1),
                     ),
                     child: const Icon(Icons.eco_rounded,
                         color: Colors.white, size: 30),
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 4),
                   Text('Offline Crop Diagnostics',
                       style: TextStyle(
-                          color: Colors.white.withOpacity(0.55),
+                          color: Colors.white.withValues(alpha: 0.55),
                           fontSize: 11)),
                 ],
               ),
@@ -150,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(14)),
                         elevation: 4,
                         shadowColor:
-                            AppColors.greenBright.withOpacity(0.4),
+                            AppColors.greenBright.withValues(alpha: 0.4),
                       ),
                       child: const Text('SIGN IN',
                           style: TextStyle(
@@ -229,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
         border: Border.all(color: const Color(0xFFDDE8DF), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.greenDeep.withOpacity(0.04),
+            color: AppColors.greenDeep.withValues(alpha: 0.04),
             blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
@@ -244,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen> {
           labelStyle: const TextStyle(
               fontSize: 9, color: AppColors.textDim, letterSpacing: 0.5),
           hintStyle: TextStyle(
-              fontSize: 12, color: AppColors.textDim.withOpacity(0.6)),
+              fontSize: 12, color: AppColors.textDim.withValues(alpha: 0.6)),
           prefixIcon: Icon(icon, color: AppColors.textMid, size: 18),
           suffixIcon: suffix,
           border: InputBorder.none,
