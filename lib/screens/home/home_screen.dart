@@ -1,13 +1,20 @@
 import 'package:agrivision/modules/sync/sync_engine.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_routes.dart';
 import '../../database/db_provider.dart';
-import '../../database/local_database.dart'; 
+import '../../database/local_database.dart';
+import '../../providers/auth_provider.dart'; // ← adjust path if different
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,11 +58,22 @@ class HomeScreen extends StatelessWidget {
                                   fontWeight: FontWeight.w700)),
                         ],
                       ),
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.white.withValues(alpha: 0.2),
-                        child: const Icon(Icons.person_outline_rounded,
-                            color: Colors.white, size: 20),
+                      GestureDetector(
+                        onTap: () => _showProfileMenu(context),
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          child: Text(
+                            context
+                                .watch<AuthProvider>()
+                                .displayName[0]
+                                .toUpperCase(),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -168,7 +186,7 @@ class HomeScreen extends StatelessWidget {
                   ]),
 
                   const SizedBox(height: 18),
-                  
+
                   // ── Recent Diagnoses ─────────────────────────────
                   _sectionLabel('Recent Diagnoses'),
                   const SizedBox(height: 10),
@@ -243,9 +261,79 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // ── Bottom Nav 
+          // ── Bottom Nav
           _bottomNav(context, 0),
         ],
+      ),
+    );
+  }
+
+  // ── Profile menu / sign out ─────────────────────────
+  void _showProfileMenu(BuildContext context) {
+    final auth = context.read<AuthProvider>();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(
+              top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Profile info
+            CircleAvatar(
+              radius: 30,
+              backgroundColor:
+                  AppColors.greenMid.withValues(alpha: 0.15),
+              child: Text(
+                auth.displayName[0].toUpperCase(),
+                style: const TextStyle(
+                    fontSize:   28,
+                    fontWeight: FontWeight.w800,
+                    color:      AppColors.greenMid),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(auth.displayName,
+                style: const TextStyle(
+                    fontSize:   16,
+                    fontWeight: FontWeight.w700,
+                    color:      AppColors.greenDeep)),
+            Text(auth.email,
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textDim)),
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 8),
+
+            // Sign out
+            ListTile(
+              leading: const Icon(Icons.logout_rounded,
+                  color: Color(0xFFE74C3C)),
+              title: const Text('Sign Out',
+                  style: TextStyle(
+                      color: Color(0xFFE74C3C),
+                      fontWeight: FontWeight.w600)),
+              onTap: () async {
+                Navigator.pop(context);
+                await auth.signOut();
+                if (mounted) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.login,
+                    (_) => false,
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }

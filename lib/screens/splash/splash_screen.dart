@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:animate_do/animate_do.dart';
+import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_routes.dart';
+import '../../providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -10,29 +11,74 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double>   _fade;
+  late Animation<double>   _scale;
 
   @override
   void initState() {
     super.initState();
-    // Auto-navigate to login after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.login);
-      }
+    _controller = AnimationController(
+      vsync:    this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _fade  = CurvedAnimation(
+        parent: _controller, curve: Curves.easeIn);
+    _scale = Tween<double>(begin: 0.85, end: 1.0)
+        .animate(CurvedAnimation(
+            parent: _controller, curve: Curves.easeOutBack));
+    _controller.forward();
+
+    Future.delayed(const Duration(seconds: 6), () {
+     if (mounted) {
+       Navigator.pushReplacementNamed(context, AppRoutes.login);
+     }
     });
+
+    // Check auth state after animation
+    Future.delayed(const Duration(milliseconds: 2200), _checkAuth);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _checkAuth() {
+    if (!mounted) return;
+
+    final auth  = context.read<AuthProvider>();
+    final status = auth.status;
+
+    if (status == AuthStatus.unknown) {
+      // Still loading — wait a bit more
+      Future.delayed(
+          const Duration(milliseconds: 500), _checkAuth);
+      return;
+    }
+
+    if (status == AuthStatus.authenticated) {
+      // ── Requirement 11 + 12: auto-login ──────────────
+      // Firebase already has a valid cached session
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } else {
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        width: double.infinity,
+        width:  double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin:  Alignment.topLeft,
+            end:    Alignment.bottomRight,
             colors: [
               AppColors.greenDeep,
               AppColors.greenMid,
@@ -42,129 +88,61 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-
-              // Logo box
-              FadeInDown(
-                duration: const Duration(milliseconds: 800),
-                child: Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(26),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.eco_rounded,
-                    color: Colors.white,
-                    size: 48,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // App name
-              FadeInDown(
-                delay: const Duration(milliseconds: 200),
-                child: const Text(
-                  'AGRIVISION',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 3,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // Tagline
-              FadeInDown(
-                delay: const Duration(milliseconds: 400),
-                child: Text(
-                  'AI-Powered Crop Disease Diagnosis\nWorks Completely Offline',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.65),
-                    fontSize: 13,
-                    height: 1.6,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 60),
-
-              // Get Started button
-              FadeInUp(
-                delay: const Duration(milliseconds: 600),
-                child: GestureDetector(
-                  onTap: () => Navigator.pushReplacementNamed(
-                      context, AppRoutes.login),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 48, vertical: 15),
+          child: FadeTransition(
+            opacity: _fade,
+            child: ScaleTransition(
+              scale: _scale,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo
+                  Container(
+                    width: 90, height: 90,
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(26),
+                      border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1.5),
                     ),
-                    child: const Text(
-                      'GET STARTED',
+                    child: const Icon(Icons.eco_rounded,
+                        color: Colors.white, size: 48),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // App name
+                  const Text('AGIVISION',
                       style: TextStyle(
-                        color: AppColors.greenMid,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.5,
-                      ),
+                          color:      Colors.white,
+                          fontSize:   32,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 3)),
+                  const SizedBox(height: 10),
+
+                  // Tagline
+                  Text(
+                    'AI-Powered Crop Disease Diagnosis\n'
+                    'Works Completely Offline',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color:  Colors.white.withOpacity(0.65),
+                        fontSize: 13,
+                        height: 1.6,
+                        letterSpacing: 0.5),
+                  ),
+                  const SizedBox(height: 48),
+
+                  // Loading indicator
+                  SizedBox(
+                    width: 24, height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white.withOpacity(0.6),
                     ),
                   ),
-                ),
+                ],
               ),
-
-              const SizedBox(height: 18),
-
-              // Sign in link
-              FadeInUp(
-                delay: const Duration(milliseconds: 700),
-                child: GestureDetector(
-                  onTap: () => Navigator.pushReplacementNamed(
-                      context, AppRoutes.login),
-                  child: RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
-                        fontSize: 12,
-                      ),
-                      children: const [
-                        TextSpan(text: 'Already have an account? '),
-                        TextSpan(
-                          text: 'Sign In',
-                          style: TextStyle(
-                            color: AppColors.greenBright,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

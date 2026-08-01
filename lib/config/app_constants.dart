@@ -3,7 +3,7 @@ class AppConstants {
 
   // ── Backend connection ──────────────────────────────────
 
-  static const String _backendHost = '192.168.1.100';
+  static const String _backendHost = '192.168.50.141';
   static const int    _backendPort = 8000;
 
   static String get backendUrl =>

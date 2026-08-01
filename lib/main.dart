@@ -1,29 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'config/app_colors.dart';
 import 'config/app_routes.dart';
 import 'database/db_provider.dart';
 import 'modules/ai/model_service.dart';
 import 'modules/sync/sync_engine.dart';
+import 'providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Load AI model
+  // 1. Initialize Firebase first
+
   try {
-    await ModelService.instance.initialize();
-    print(' AI model loaded');
+    await Firebase.initializeApp();
+    print('✅ Firebase initialized');
   } catch (e) {
-    print('  AI model: $e');
+    // Print the actual error so you can see it in terminal
+    print('❌ Firebase init failed: $e');
+    print('   Check that google-services.json is in android/app/');
   }
 
-  // 2. Seed treatment database
+
+  // 2. Load AI model
+  try {
+    await ModelService.instance.initialize();
+    print('✅ AI model loaded');
+  } catch (e) {
+    print('⚠️  AI model: $e');
+  }
+
+  // 3. Seed treatment database
   try {
     await DBProvider.db.treatmentDao.seedIfEmpty();
   } catch (e) {
-    print('  Treatments: $e');
+    print('⚠️  Treatments: $e');
   }
 
-  runApp(const AgivisionApp());
+  runApp(
+    // Wrap the entire app with Provider
+    ChangeNotifierProvider(
+      create: (_) => AuthProvider(),
+      child: const AgivisionApp(),
+    ),
+  );
 }
 
 class AgivisionApp extends StatefulWidget {
@@ -40,12 +61,8 @@ class _AgivisionAppState extends State<AgivisionApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
-    // Attempt sync shortly after app starts
     Future.delayed(
-      const Duration(seconds: 3),
-      _triggerSync,
-    );
+        const Duration(seconds: 3), _triggerSync);
   }
 
   @override
@@ -56,18 +73,13 @@ class _AgivisionAppState extends State<AgivisionApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Re-attempt sync every time app comes to foreground
-    if (state == AppLifecycleState.resumed) {
-      _triggerSync();
-    }
+    if (state == AppLifecycleState.resumed) _triggerSync();
   }
 
   void _triggerSync() {
     Future.microtask(() async {
       final result = await SyncEngine.instance.syncNow();
-      if (result.hadActivity) {
-        print('🔄 Sync: ${result.message}');
-      }
+      if (result.hadActivity) print('🔄 ${result.message}');
     });
   }
 
@@ -80,13 +92,13 @@ class _AgivisionAppState extends State<AgivisionApp>
         primaryColor: AppColors.greenDeep,
         fontFamily: 'DM Sans',
         colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.greenDeep,
-          brightness: Brightness.light,
+          seedColor:   AppColors.greenDeep,
+          brightness:  Brightness.light,
         ),
         useMaterial3: true,
       ),
       initialRoute: AppRoutes.splash,
-      routes: AppRoutes.routes,
+      routes:       AppRoutes.routes,
     );
   }
 }

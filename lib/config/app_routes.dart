@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
@@ -9,7 +11,7 @@ import '../screens/map/map_screen.dart';
 import '../screens/history/history_screen.dart';
 
 class AppRoutes {
-  static const String splash   = '/splash';
+  static const String splash   = '/';
   static const String login    = '/login';
   static const String register = '/register';
   static const String home     = '/home';
@@ -18,14 +20,31 @@ class AppRoutes {
   static const String map      = '/map';
   static const String history  = '/history';
 
-  static Map<String, WidgetBuilder> routes = {
+  static Map<String, WidgetBuilder> get routes => {
     splash:   (_) => const SplashScreen(),
     login:    (_) => const LoginScreen(),
     register: (_) => const RegisterScreen(),
-    home:     (_) => const HomeScreen(),
-    scan:     (_) => const ScanScreen(),
-    result:   (_) => const ResultScreen(),
-    map:      (_) => const MapScreen(),
-    history:  (_) => const HistoryScreen(),
+
+    // Protected routes — redirect to login if not authed
+    home: (ctx) => _guard(ctx, const HomeScreen()),
+    scan: (ctx) => _guard(ctx, const ScanScreen()),
+    result: (ctx) => _guard(ctx, const ResultScreen()),
+    map:  (ctx) => _guard(ctx, const MapScreen()),
+    history: (ctx) => _guard(ctx, const HistoryScreen()),
   };
+
+  /// Redirects unauthenticated users to login
+  static Widget _guard(BuildContext ctx, Widget screen) {
+    final isLoggedIn =
+        ctx.read<AuthProvider>().isLoggedIn;
+    if (!isLoggedIn) {
+      // Push login and remove all previous routes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushNamedAndRemoveUntil(
+          ctx, login, (_) => false);
+      });
+      return const SizedBox.shrink();
+    }
+    return screen;
+  }
 }
