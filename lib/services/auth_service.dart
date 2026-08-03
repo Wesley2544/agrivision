@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import '../utils/network_utils.dart'; // ★ CHANGED — replaces connectivity_plus import
 
 /// Result returned from every auth operation
 class AuthResult {
@@ -31,12 +31,11 @@ class AuthService {
   Stream<User?> get authStateChanges =>
       _auth.authStateChanges();
 
-  // ── Connectivity check ───────────────────────────────
-  Future<bool> _isConnected() async {
-    final result =
-        await Connectivity().checkConnectivity();
-    return result.first != ConnectivityResult.none;
-  }
+  // ★ CHANGED — was checking connectivity_plus's raw interface-type
+  // result directly (result.first != ConnectivityResult.none), which
+  // is unreliable on emulators. Now delegates to NetworkUtils, which
+  // does a real DNS lookup as the source of truth.
+  Future<bool> _isConnected() => NetworkUtils.hasRealInternet();
 
   // ── Firebase error → readable message ────────────────
   String _mapError(FirebaseAuthException e) {

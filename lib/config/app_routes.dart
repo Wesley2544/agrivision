@@ -35,16 +35,23 @@ class AppRoutes {
 
   /// Redirects unauthenticated users to login
   static Widget _guard(BuildContext ctx, Widget screen) {
-    final isLoggedIn =
-        ctx.read<AuthProvider>().isLoggedIn;
-    if (!isLoggedIn) {
-      // Push login and remove all previous routes
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushNamedAndRemoveUntil(
-          ctx, login, (_) => false);
-      });
-      return const SizedBox.shrink();
-    }
+    // ★★★ TEMP FOR DEMO — REMOVE THIS LINE AFTER PRESENTING ★★★
+    // Bypasses the auth check entirely so protected routes render
+    // immediately without needing a signed-in Firebase user.
     return screen;
+
+    // ── Original auth-guard logic — restore by deleting the
+    // "return screen;" line above and un-commenting this block ──
+    // final isLoggedIn =
+    //     ctx.read<AuthProvider>().isLoggedIn;
+    // if (!isLoggedIn) {
+    //   // Push login and remove all previous routes
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     Navigator.pushNamedAndRemoveUntil(
+    //       ctx, login, (_) => false);
+    //   });
+    //   return const SizedBox.shrink();
+    // }
+    // return screen;
   }
 }

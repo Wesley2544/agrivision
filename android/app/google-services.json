@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "1022779993821",
-    "project_id": "agrivision-946a6",
-    "storage_bucket": "agrivision-946a6.firebasestorage.app"
+    "project_number": "967311517911",
+    "project_id": "agivision-4044c",
+    "storage_bucket": "agivision-4044c.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1022779993821:android:38d4702b88c16a85767534",
+        "mobilesdk_app_id": "1:967311517911:android:20a69353e4b6e1e04ca892",
         "android_client_info": {
-          "package_name": "com.wise.agrivision"
+          "package_name": "com.example.agrivision"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCkAwKKY8z53uETgN_9Y3viQjWhkJFS29U"
+          "current_key": "AIzaSyAkfepKTGscFTi9AE7ACP_AzLUW0xqJZI8"
         }
       ],
       "services": {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../config/app_colors.dart';
 import '../../config/app_routes.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/network_utils.dart'; // ★ CHANGED — added
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,11 +28,14 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _checkConnectivity();
 
-    // Listen for connectivity changes
-    Connectivity().onConnectivityChanged.listen((results) {
+    // ★ CHANGED — was: Connectivity().onConnectivityChanged.listen(...)
+    // checking result.first == ConnectivityResult.none directly.
+    // Now routes through NetworkUtils, which does a real DNS lookup
+    // instead of trusting the raw interface-type reading (unreliable
+    // on emulators).
+    NetworkUtils.onRealConnectivityChanged.listen((isOnline) {
       if (mounted) {
-        setState(() =>
-            _isOffline = results.first == ConnectivityResult.none);
+        setState(() => _isOffline = !isOnline);
       }
     });
   }
@@ -46,11 +49,12 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // ★ CHANGED — was: Connectivity().checkConnectivity() + comparing
+  // to ConnectivityResult.none. Now uses NetworkUtils.hasRealInternet().
   Future<void> _checkConnectivity() async {
-    final result = await Connectivity().checkConnectivity();
+    final isOnline = await NetworkUtils.hasRealInternet();
     if (mounted) {
-      setState(() =>
-          _isOffline = result.first == ConnectivityResult.none);
+      setState(() => _isOffline = !isOnline);
     }
   }
 
